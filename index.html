@@ -793,6 +793,8 @@
     <script>
         // Translation functionality using server-side translations
         const translateText = async (text, targetLang) => {
+            if (!text || text.trim() === '') return '';
+            
             try {
                 const response = await fetch(`translate.php?text=${encodeURIComponent(text)}&lang=${targetLang}`);
                 const data = await response.json();
@@ -811,6 +813,8 @@
 
         // Text-to-speech functionality
         const speakText = (text, lang) => {
+            if (!text || text.trim() === '') return;
+            
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = lang;
             
@@ -831,16 +835,26 @@
                 const btnText = this.textContent;
                 document.querySelector('.language-btn').textContent = btnText;
                 
-                // Translate all content including amenities
-                const elements = document.querySelectorAll('[data-translate], .amenity-list li');
+                // Show loading indicator
+                document.querySelectorAll('.loading').forEach(el => el.classList.add('active'));
+                
+                // Translate all content including amenities and section titles
+                const elements = document.querySelectorAll('h1, h2, h3, p, .btn, .review-text, .amenity-list li, .section-title h2, .section-title p, .amenity-category h3');
+                
                 for (const element of elements) {
                     const originalText = element.getAttribute('data-translate') || element.textContent.trim();
                     if (!element.getAttribute('data-translate')) {
                         element.setAttribute('data-translate', originalText);
                     }
-                    const translatedText = await translateText(originalText, lang);
-                    element.textContent = translatedText;
+                    
+                    if (originalText && originalText.trim() !== '') {
+                        const translatedText = await translateText(originalText, lang);
+                        element.textContent = translatedText;
+                    }
                 }
+                
+                // Hide loading indicator
+                document.querySelectorAll('.loading').forEach(el => el.classList.remove('active'));
             });
         });
 
@@ -856,11 +870,13 @@
             };
             const langCode = langMap[currentLang] || 'en';
             
-            const elements = document.querySelectorAll('[data-translate], .amenity-list li');
+            const elements = document.querySelectorAll('[data-translate], .amenity-list li, .section-title h2, .section-title p, .amenity-category h3');
             let textToSpeak = '';
             
             elements.forEach(element => {
-                textToSpeak += element.textContent + '. ';
+                if (element.textContent && element.textContent.trim() !== '') {
+                    textToSpeak += element.textContent + '. ';
+                }
             });
             
             speakText(textToSpeak, langCode);
@@ -873,9 +889,11 @@
 
         // Add data-translate attributes to translatable elements
         document.addEventListener('DOMContentLoaded', () => {
-            const translatableElements = document.querySelectorAll('h1, h2, h3, p, .btn, .review-text, .amenity-list li');
+            const translatableElements = document.querySelectorAll('h1, h2, h3, p, .btn, .review-text, .amenity-list li, .section-title h2, .section-title p, .amenity-category h3');
             translatableElements.forEach(element => {
-                element.setAttribute('data-translate', element.textContent.trim());
+                if (element.textContent && element.textContent.trim() !== '') {
+                    element.setAttribute('data-translate', element.textContent.trim());
+                }
             });
         });
     </script>
