@@ -21,25 +21,59 @@ if (isset($translations[$targetLang][$text])) {
     exit;
 }
 
-// If no stored translation, use MyMemory API
-$apiUrl = "https://api.mymemory.translated.net/get?q=" . urlencode($text) . "&langpair=en|" . $targetLang;
-$response = file_get_contents($apiUrl);
+// If no stored translation, use LibreTranslate API
+$apiUrl = "https://libretranslate.de/translate";
+
+$postData = [
+    'q' => $text,
+    'source' => 'en',
+    'target' => $targetLang,
+    'format' => 'text'
+];
+
+$options = [
+    'http' => [
+        'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+        'method'  => 'POST',
+        'content' => http_build_query($postData)
+    ]
+];
+
+$context  = stream_context_create($options);
+$response = file_get_contents($apiUrl, false, $context);
 $data = json_decode($response, true);
 
-if (isset($data['responseData']['translatedText'])) {
+if (isset($data['translatedText'])) {
     // Store the new translation
-    $translations[$targetLang][$text] = $data['responseData']['translatedText'];
+    $translations[$targetLang][$text] = $data['translatedText'];
     file_put_contents('translations.json', json_encode($translations, JSON_PRETTY_PRINT));
 
     echo json_encode([
         'success' => true,
-        'translation' => $data['responseData']['translatedText'],
+        'translation' => $data['translatedText'],
         'source' => 'api'
     ]);
 } else {
-    echo json_encode([
-        'success' => false,
-        'error' => 'Translation failed',
-        'text' => $text
-    ]);
+    // Fallback to MyMemory API if LibreTranslate fails
+    $fallbackUrl = "https://api.mymemory.translated.net/get?q=" . urlencode($text) . "&langpair=en|" . $targetLang;
+    $fallbackResponse = file_get_contents($fallbackUrl);
+    $fallbackData = json_decode($fallbackResponse, true);
+    
+    if (isset($fallbackData['responseData']['translatedText'])) {
+        // Store the new translation
+        $translations[$targetLang][$text] = $fallbackData['responseData']['translatedText'];
+        file_put_contents('translations.json', json_encode($translations, JSON_PRETTY_PRINT));
+        
+        echo json_encode([
+            'success' => true,
+            'translation' => $fallbackData['responseData']['translatedText'],
+            'source' => 'fallback'
+        ]);
+    } else {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Translation failed',
+            'text' => $text
+        ]);
+    }
 } 
