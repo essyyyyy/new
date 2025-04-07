@@ -839,7 +839,7 @@
                 document.querySelectorAll('.loading').forEach(el => el.classList.add('active'));
                 
                 // Get all text elements that need translation
-                const elements = document.querySelectorAll('h1, h2, h3, p, .btn, .review-text, .amenity-list li, .section-title h2, .section-title p, .amenity-category h3, .logo, .footer-logo, .copyright');
+                const elements = document.querySelectorAll('h1, h2, h3, p, .btn, .review-text, .amenity-list li, .section-title h2, .section-title p, .amenity-category h3, .logo, .footer-logo, .copyright, nav ul li a, .review-author, .review-date, .location-info p, .location-details p');
                 
                 // Translate each element
                 for (const element of elements) {
@@ -847,6 +847,27 @@
                     if (originalText) {
                         const translatedText = await translateText(originalText, lang);
                         element.textContent = translatedText;
+                    }
+                }
+                
+                // Translate button text
+                const buttons = document.querySelectorAll('.btn');
+                for (const button of buttons) {
+                    const originalText = button.textContent.trim();
+                    if (originalText) {
+                        const translatedText = await translateText(originalText, lang);
+                        button.textContent = translatedText;
+                    }
+                }
+                
+                // Translate TTS button
+                const ttsButton = document.getElementById('ttsButton');
+                const ttsText = ttsButton.querySelector('span:not(.loading)');
+                if (ttsText) {
+                    const originalText = ttsText.textContent.trim();
+                    if (originalText) {
+                        const translatedText = await translateText(originalText, lang);
+                        ttsText.textContent = translatedText;
                     }
                 }
                 
