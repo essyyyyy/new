@@ -791,7 +791,7 @@
     </footer>
 
     <script>
-        // Translation functionality using server-side translations
+        // Simple direct translation function
         const translateText = async (text, targetLang) => {
             if (!text || text.trim() === '') return '';
             
@@ -838,16 +838,13 @@
                 // Show loading indicator
                 document.querySelectorAll('.loading').forEach(el => el.classList.add('active'));
                 
-                // Translate all content including amenities and section titles
-                const elements = document.querySelectorAll('h1, h2, h3, p, .btn, .review-text, .amenity-list li, .section-title h2, .section-title p, .amenity-category h3');
+                // Get all text elements that need translation
+                const elements = document.querySelectorAll('h1, h2, h3, p, .btn, .review-text, .amenity-list li, .section-title h2, .section-title p, .amenity-category h3, .logo, .footer-logo, .copyright');
                 
+                // Translate each element
                 for (const element of elements) {
-                    const originalText = element.getAttribute('data-translate') || element.textContent.trim();
-                    if (!element.getAttribute('data-translate')) {
-                        element.setAttribute('data-translate', originalText);
-                    }
-                    
-                    if (originalText && originalText.trim() !== '') {
+                    const originalText = element.textContent.trim();
+                    if (originalText) {
                         const translatedText = await translateText(originalText, lang);
                         element.textContent = translatedText;
                     }
@@ -870,7 +867,7 @@
             };
             const langCode = langMap[currentLang] || 'en';
             
-            const elements = document.querySelectorAll('[data-translate], .amenity-list li, .section-title h2, .section-title p, .amenity-category h3');
+            const elements = document.querySelectorAll('h1, h2, h3, p, .btn, .review-text, .amenity-list li, .section-title h2, .section-title p, .amenity-category h3');
             let textToSpeak = '';
             
             elements.forEach(element => {
@@ -886,16 +883,6 @@
         window.speechSynthesis.onvoiceschanged = () => {
             window.speechSynthesis.getVoices();
         };
-
-        // Add data-translate attributes to translatable elements
-        document.addEventListener('DOMContentLoaded', () => {
-            const translatableElements = document.querySelectorAll('h1, h2, h3, p, .btn, .review-text, .amenity-list li, .section-title h2, .section-title p, .amenity-category h3');
-            translatableElements.forEach(element => {
-                if (element.textContent && element.textContent.trim() !== '') {
-                    element.setAttribute('data-translate', element.textContent.trim());
-                }
-            });
-        });
     </script>
 </body>
 </html>
