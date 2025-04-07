@@ -4,24 +4,11 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST');
 header('Access-Control-Allow-Headers: Content-Type');
 
-// Load translations from JSON file
-$translations = json_decode(file_get_contents('translations.json'), true);
-
 // Get the text and target language from the request
 $text = $_GET['text'] ?? '';
 $targetLang = $_GET['lang'] ?? 'en';
 
-// If we have a stored translation, use it
-if (isset($translations[$targetLang][$text])) {
-    echo json_encode([
-        'success' => true,
-        'translation' => $translations[$targetLang][$text],
-        'source' => 'stored'
-    ]);
-    exit;
-}
-
-// If no stored translation, use LibreTranslate API
+// Use LibreTranslate API directly
 $apiUrl = "https://libretranslate.de/translate";
 
 $postData = [
@@ -44,14 +31,9 @@ $response = file_get_contents($apiUrl, false, $context);
 $data = json_decode($response, true);
 
 if (isset($data['translatedText'])) {
-    // Store the new translation
-    $translations[$targetLang][$text] = $data['translatedText'];
-    file_put_contents('translations.json', json_encode($translations, JSON_PRETTY_PRINT));
-
     echo json_encode([
         'success' => true,
-        'translation' => $data['translatedText'],
-        'source' => 'api'
+        'translation' => $data['translatedText']
     ]);
 } else {
     // Fallback to MyMemory API if LibreTranslate fails
@@ -60,14 +42,9 @@ if (isset($data['translatedText'])) {
     $fallbackData = json_decode($fallbackResponse, true);
     
     if (isset($fallbackData['responseData']['translatedText'])) {
-        // Store the new translation
-        $translations[$targetLang][$text] = $fallbackData['responseData']['translatedText'];
-        file_put_contents('translations.json', json_encode($translations, JSON_PRETTY_PRINT));
-        
         echo json_encode([
             'success' => true,
-            'translation' => $fallbackData['responseData']['translatedText'],
-            'source' => 'fallback'
+            'translation' => $fallbackData['responseData']['translatedText']
         ]);
     } else {
         echo json_encode([
